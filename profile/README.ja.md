@@ -46,7 +46,6 @@
 
 | リポジトリ | 役割 | 技術 |
 |---|---|---|
-| [data2flow-docs](https://github.com/data2flow/data2flow-docs) | 仕様・設計・決定記録・ストーリーボード | Markdown |
 | data2flow-web | 画面 + BFF(サーバーレンダリング、セッション) | React Router v7, TypeScript |
 | data2flow-api-gateway | ルーティング、トークン確認、ID 伝達 | Spring Cloud Gateway |
 | data2flow-auth | ログイン、トークン発行・失効 | Spring Boot 4 |
@@ -59,7 +58,6 @@
 | data2flow-ai | 結果解説、レポート、チャットボット、MCP サーバー | Spring AI |
 | data2flow-analytics | 分析テンプレート、リアルタイム推論 | Python, FastAPI |
 | data2flow-contracts | メッセージスキーマ、共通レスポンス・エラー形式 | Java, JSON Schema |
-| data2flow-manifests | Kubernetes デプロイ(GitOps) | Kustomize, Argo CD |
 
 ## 技術スタック
 

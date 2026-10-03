@@ -47,7 +47,6 @@
 
 | 저장소 | 역할 | 기술 |
 |---|---|---|
-| [data2flow-docs](https://github.com/data2flow/data2flow-docs) | 스펙·설계·결정 기록·스토리보드 | Markdown |
 | data2flow-web | 화면 + BFF (서버 렌더링, 세션) | React Router v7, TypeScript |
 | data2flow-api-gateway | 라우팅, 토큰 확인, 신원 전달 | Spring Cloud Gateway |
 | data2flow-auth | 로그인, 토큰 발급·폐기 | Spring Boot 4 |
@@ -60,7 +59,6 @@
 | data2flow-ai | 결과 해설, 리포트, 챗봇, MCP 서버 | Spring AI |
 | data2flow-analytics | 분석 템플릿, 실시간 추론 | Python, FastAPI |
 | data2flow-contracts | 메시지 스키마, 공통 응답·오류 형식 | Java, JSON Schema |
-| data2flow-manifests | Kubernetes 배포 (GitOps) | Kustomize, Argo CD |
 
 ## 기술 스택
 

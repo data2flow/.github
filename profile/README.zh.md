@@ -46,7 +46,6 @@
 
 | 仓库 | 作用 | 技术 |
 |---|---|---|
-| [data2flow-docs](https://github.com/data2flow/data2flow-docs) | 规格、设计、决策记录、故事板 | Markdown |
 | data2flow-web | 界面 + BFF(服务端渲染、会话) | React Router v7, TypeScript |
 | data2flow-api-gateway | 路由、令牌校验、身份传递 | Spring Cloud Gateway |
 | data2flow-auth | 登录、令牌签发与吊销 | Spring Boot 4 |
@@ -59,7 +58,6 @@
 | data2flow-ai | 结果解读、报告、聊天机器人、MCP 服务器 | Spring AI |
 | data2flow-analytics | 分析模板、实时推理 | Python, FastAPI |
 | data2flow-contracts | 消息模式、通用响应与错误格式 | Java, JSON Schema |
-| data2flow-manifests | Kubernetes 部署(GitOps) | Kustomize, Argo CD |
 
 ## 技术栈
 

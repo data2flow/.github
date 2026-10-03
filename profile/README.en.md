@@ -46,7 +46,6 @@ The whole loop is built **in the UI, with settings and visual flows**, without d
 
 | Repository | Role | Tech |
 |---|---|---|
-| [data2flow-docs](https://github.com/data2flow/data2flow-docs) | Specs, design, decision records, storyboards | Markdown |
 | data2flow-web | UI + BFF (server rendering, sessions) | React Router v7, TypeScript |
 | data2flow-api-gateway | Routing, token check, identity propagation | Spring Cloud Gateway |
 | data2flow-auth | Login, token issue and revocation | Spring Boot 4 |
@@ -59,7 +58,6 @@ The whole loop is built **in the UI, with settings and visual flows**, without d
 | data2flow-ai | Result explanations, reports, chatbot, MCP server | Spring AI |
 | data2flow-analytics | Analysis templates, real-time inference | Python, FastAPI |
 | data2flow-contracts | Message schemas, common response and error formats | Java, JSON Schema |
-| data2flow-manifests | Kubernetes deployment (GitOps) | Kustomize, Argo CD |
 
 ## Tech stack
 
