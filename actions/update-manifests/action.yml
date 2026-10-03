@@ -11,7 +11,7 @@ inputs:
 runs:
   using: composite
   steps:
-    - uses: imranismail/setup-kustomize@v2
+    - uses: imranismail/setup-kustomize@v3
     - shell: bash
       env:
         TOKEN: ${{ inputs.token }}
