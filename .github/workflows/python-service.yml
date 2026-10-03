@@ -1,0 +1,60 @@
+# Python 서비스(data2flow-analytics) 공용 CI. 단계는 java-service와 같다
+name: python-service
+on:
+  workflow_call:
+    inputs:
+      app-name:
+        required: true
+        type: string
+      python-version:
+        required: false
+        type: string
+        default: '3.12'
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  IMAGE: ghcr.io/${{ github.repository_owner }}/${{ inputs.app-name }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ inputs.python-version }}
+          cache: pip
+      - run: pip install -e ".[dev]" pip-licenses
+      - name: 테스트·커버리지(80%)
+        run: pytest
+      - name: 라이선스 검사(ADR-018)
+        run: |
+          pip-licenses --format=csv > licenses.csv
+          cat licenses.csv
+          if grep -iE "Affero|AGPL|SSPL|Server Side Public|Business Source" licenses.csv; then
+            echo "::error::금지 라이선스 의존성이 있습니다(design/oss-stack.md)"; exit 1
+          fi
+      - name: 이미지 빌드
+        run: docker build -t "$IMAGE:${{ github.sha }}" .
+      - name: 취약점 검사(HIGH 이상 실패)
+        run: |
+          docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy:latest \
+            image --exit-code 1 --severity HIGH,CRITICAL --ignore-unfixed --no-progress "$IMAGE:${{ github.sha }}"
+      - uses: docker/login-action@v3
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: 이미지 push(:sha)
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: docker push "$IMAGE:${{ github.sha }}"
+      - name: data2flow-manifests staging 태그 갱신
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: data2flow/.github/actions/update-manifests@v1
+        with:
+          app-name: ${{ inputs.app-name }}
+          token: ${{ secrets.MANIFESTS_TOKEN }}

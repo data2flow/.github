@@ -1,0 +1,81 @@
+# Java 서비스 공용 CI (data2flow-docs design/deployment.md §4, operations/release-and-change.md §1)
+# PR: 빌드·테스트·커버리지 80%·라이선스 검사·이미지 빌드·취약점 검사(push 안 함)
+# main push: 위 + GHCR push(:<sha>) + data2flow-manifests overlays/staging 이미지 태그 갱신 → Argo CD가 staging 반영
+name: java-service
+on:
+  workflow_call:
+    inputs:
+      app-name:
+        description: 저장소·이미지 이름 (예 data2flow-core-api)
+        required: true
+        type: string
+      java-version:
+        required: false
+        type: string
+        default: '21'
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  IMAGE: ghcr.io/${{ github.repository_owner }}/${{ inputs.app-name }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          java-version: ${{ inputs.java-version }}
+          distribution: temurin
+          cache: maven
+          # data2flow-contracts(GitHub Packages)를 읽기 위한 서버 설정
+          server-id: github
+          server-username: GITHUB_ACTOR
+          server-password: GITHUB_TOKEN
+
+      - name: 빌드·테스트·커버리지(80%)
+        run: ./mvnw -B -ntp verify
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 라이선스 검사(ADR-018 — AGPL·SSPL·BSL·TSL·RSAL 금지)
+        run: |
+          ./mvnw -B -ntp -q org.codehaus.mojo:license-maven-plugin:2.7.1:add-third-party -Dlicense.excludedScopes=test,provided
+          f=target/generated-sources/license/THIRD-PARTY.txt
+          cat "$f"
+          if grep -iE "Affero|AGPL|Server Side Public|SSPL|Business Source|BSL-1|Timescale License|RSAL|Redis Source Available|Oracle Free Terms|GFTC" "$f"; then
+            echo "::error::금지 라이선스 의존성이 있습니다(design/oss-stack.md)"; exit 1
+          fi
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 이미지 빌드
+        run: docker build -t "$IMAGE:${{ github.sha }}" .
+
+      - name: 취약점 검사(HIGH 이상 실패)
+        run: |
+          docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy:latest \
+            image --exit-code 1 --severity HIGH,CRITICAL --ignore-unfixed --no-progress "$IMAGE:${{ github.sha }}"
+
+      - name: GHCR 로그인
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 이미지 push(:sha)
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: docker push "$IMAGE:${{ github.sha }}"
+
+      - name: data2flow-manifests staging 태그 갱신
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: data2flow/.github/actions/update-manifests@v1
+        with:
+          app-name: ${{ inputs.app-name }}
+          token: ${{ secrets.MANIFESTS_TOKEN }}

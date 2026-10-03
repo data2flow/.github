@@ -1,0 +1,60 @@
+# 웹(React Router SSR + BFF) 공용 CI. 단계는 java-service와 같다: 검사 → 이미지 → (main) push → manifests staging 갱신
+name: node-web
+on:
+  workflow_call:
+    inputs:
+      app-name:
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  IMAGE: ghcr.io/${{ github.repository_owner }}/${{ inputs.app-name }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: 타입 검사
+        run: pnpm typecheck
+      - name: 테스트·커버리지(80%)·i18n 키 일치
+        run: pnpm test:coverage
+      - name: 빌드
+        run: pnpm build
+      - name: 라이선스 검사(ADR-018)
+        run: |
+          pnpm licenses list --prod --json > licenses.json
+          if grep -iE '"(AGPL|SSPL|BUSL|BSL)[^"]*"' licenses.json; then
+            echo "::error::금지 라이선스 의존성이 있습니다(design/oss-stack.md)"; exit 1
+          fi
+      - name: 이미지 빌드
+        run: docker build -t "$IMAGE:${{ github.sha }}" .
+      - name: 취약점 검사(HIGH 이상 실패)
+        run: |
+          docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy:latest \
+            image --exit-code 1 --severity HIGH,CRITICAL --ignore-unfixed --no-progress "$IMAGE:${{ github.sha }}"
+      - uses: docker/login-action@v3
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: 이미지 push(:sha)
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: docker push "$IMAGE:${{ github.sha }}"
+      - name: data2flow-manifests staging 태그 갱신
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: data2flow/.github/actions/update-manifests@v1
+        with:
+          app-name: ${{ inputs.app-name }}
+          token: ${{ secrets.MANIFESTS_TOKEN }}
