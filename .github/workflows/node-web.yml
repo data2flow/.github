@@ -57,4 +57,4 @@ jobs:
         uses: data2flow/.github/actions/update-manifests@v1
         with:
           app-name: ${{ inputs.app-name }}
-          token: ${{ secrets.MANIFESTS_TOKEN }}
+          token: ${{ secrets.MANIFEST_REPO_TOKEN }}
