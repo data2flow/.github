@@ -58,8 +58,14 @@ jobs:
 
       - name: 취약점 검사(HIGH 이상 실패)
         run: |
+          set +e
           docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy:latest \
-            image --exit-code 1 --severity HIGH,CRITICAL --ignore-unfixed --no-progress "$IMAGE:${{ github.sha }}"
+            image --exit-code 1 --severity HIGH,CRITICAL --ignore-unfixed --no-progress --format table "$IMAGE:${{ github.sha }}" > trivy.txt
+          code=$?
+          cat trivy.txt
+          # 결과를 작업 요약에도 남겨 로그를 열지 않고 볼 수 있게 한다
+          { echo "### Trivy (HIGH·CRITICAL, 고친 버전이 있는 것만)"; echo '```'; cat trivy.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+          exit $code
 
       - name: GHCR 로그인
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
