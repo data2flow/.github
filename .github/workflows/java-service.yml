@@ -47,7 +47,7 @@ jobs:
           ./mvnw -B -ntp -q org.codehaus.mojo:license-maven-plugin:2.7.1:add-third-party -Dlicense.excludedScopes=test,provided
           f=target/generated-sources/license/THIRD-PARTY.txt
           cat "$f"
-          if grep -iE "Affero|AGPL|Server Side Public|SSPL|Business Source|BSL-1|Timescale License|RSAL|Redis Source Available|Oracle Free Terms|GFTC" "$f"; then
+          if grep -iE "Affero|AGPL|Server Side Public|SSPL|Business Source|BSL-1|Timescale License|\bRSAL\b|Redis Source Available|Oracle Free Terms|GFTC" "$f"; then
             echo "::error::금지 라이선스 의존성이 있습니다(design/oss-stack.md)"; exit 1
           fi
         env:
